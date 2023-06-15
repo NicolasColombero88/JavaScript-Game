@@ -8,8 +8,11 @@ const btnDown = document.querySelector(".down");
 
 var elementSize;
 var canvasSize;
+let treesArr = [];
 var level = 0;
+let lives = 3;
 var passLevel = false;
+
 
 window.addEventListener("load", generateCanvas);
 window.addEventListener("resize", generateCanvas);
@@ -19,7 +22,14 @@ const playerPosition = {
   y: undefined
 }
 
+
+
 const giftPosition = {
+  x: undefined,
+  y: undefined
+}
+
+const doorPosition = {
   x: undefined,
   y: undefined
 }
@@ -43,9 +53,19 @@ function generateCanvas() {
 function startGame(element) {
   game.textAlign = "end";
   game.font = element + "px san-serif";
+  treesArr = [];
 
   if(passLevel == true){
+    if(level + 1 < maps.length){
     level ++
+    playerPosition.x = undefined;
+    playerPosition.y = undefined;
+    treesArr = [];
+    }else{
+      winner()
+      return
+    }
+
   }
 
   const map = maps[level];
@@ -62,40 +82,68 @@ function startGame(element) {
       let emojiPosX = element + (element * colIndex);
       let emojiPosY = element + (element * rowIndex);
 
-      if(col == 'I'){
-        giftPosition.x = colIndex;
-        giftPosition.y = rowIndex;
-      }
-
-      
       if(col == 'O'){
-        if(!playerPosition.x && ! playerPosition.y || passLevel == true){
+        if(!playerPosition.x && !playerPosition.y || passLevel == true){
           playerPosition.x = emojiPosX;
           playerPosition.y = emojiPosY;
 
-          passLevel = false
+          treesArr = [];
         }
+      } else if(col == 'I'){
+                giftPosition.x = colIndex * elementSize;
+                giftPosition.y = rowIndex * elementSize;
+      } else if(col == 'X' || col=='C' || col== 'P'){
+                treesArr.push({
+                  x : colIndex * elementSize,
+                  y : rowIndex * elementSize
+                })
       }
 
       game.fillText(emoji, emojiPosX, emojiPosY)
+
     })
   });
-
+  
+  passLevel = false
+  
   movePlayer()
-  giftColition()
+  giftCollition()
+  treesCollitions()
 
-  console.log([playerPosition.x, giftPosition.x, playerPosition.y,giftPosition.y])
+  console.log([playerPosition.x, playerPosition.y])
+  console.log([giftPosition.x, giftPosition.y])
 }
 
 function movePlayer(){
   game.fillText(emojis['PLAYER'], playerPosition.x, playerPosition.y)
 }
 
-function giftColition(){
-  if(playerPosition.x - elementSize -giftPosition.x && Math.ceil(playerPosition.y-elementSize) == Math.ceil(giftPosition.y)){
+function giftCollition(){
+  if((playerPosition.x - elementSize).toFixed(1) == giftPosition.x.toFixed(1) && (playerPosition.y - elementSize).toFixed(1) == giftPosition.y.toFixed(1)){
     passLevel = true;
     startGame(elementSize)
   }
+}
+
+function treesCollitions(){
+  treesArr.forEach(tree => {
+    const treeCollitionX = (playerPosition.x - elementSize).toFixed(1) == tree.x.toFixed(1);
+    const treeCollitionY = (playerPosition.y - elementSize).toFixed(1) == tree.y.toFixed(1);
+    
+    const isCollition = treeCollitionX && treeCollitionY;
+
+    if(isCollition){
+      playerPosition.x = undefined;
+      playerPosition.y = undefined;
+
+      
+      startGame(elementSize)
+    }
+  })
+}
+
+function winner(){
+  alert('ganaste!')
 }
 
 
@@ -129,7 +177,7 @@ function moveRight() {
   startGame(elementSize)
 }
 function moveDown() {
-  if(playerPosition.y < canvasSize){
+  if(Math.ceil(playerPosition.y) + 1 < canvasSize){
     playerPosition.y += elementSize;
     startGame(elementSize)
   }
